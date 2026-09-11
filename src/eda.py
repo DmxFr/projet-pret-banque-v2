@@ -11,13 +11,15 @@ BLEU = "#1f77b4"
 ORANGE = "#ff7f0e"
 
 
-def _save(fig, nom: str) -> None:
-    RAPPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout()
-    fig.savefig(RAPPORTS_DIR / nom, dpi=150)
-    plt.close(fig)
-    print(f"[OK] rapports/{nom}")
-
+def _save(fig, nom: str):
+    try:
+        RAPPORTS_DIR.mkdir(parents=True, exist_ok=True)
+        fig.tight_layout()
+        fig.savefig(RAPPORTS_DIR / nom, dpi=150)
+        print(f"[OK] rapports/{nom}")
+    except OSError:
+        pass  # filesystem lecture seule (ex: cloud)
+    return fig
 
 def plot_distribution_cible(df: pd.DataFrame) -> None:
     counts = df[TARGET].value_counts().sort_index()
@@ -28,7 +30,7 @@ def plot_distribution_cible(df: pd.DataFrame) -> None:
                 ha="center", fontsize=9)
     ax.set_title("Répartition de la cible — déséquilibre des classes")
     ax.set_ylabel("Nombre de clients")
-    _save(fig, "01_distribution_cible.png")
+    return _save(fig, "01_distribution_cible.png")
 
 
 def plot_taux_par_revenu(df: pd.DataFrame) -> None:
@@ -41,7 +43,7 @@ def plot_taux_par_revenu(df: pd.DataFrame) -> None:
     ax.set_ylabel("% acceptation")
     ax.legend()
     plt.setp(ax.get_xticklabels(), rotation=0)
-    _save(fig, "02_taux_par_revenu.png")
+    return _save(fig, "02_taux_par_revenu.png")
 
 
 def plot_taux_par_education(df: pd.DataFrame) -> None:
@@ -56,7 +58,7 @@ def plot_taux_par_education(df: pd.DataFrame) -> None:
     ax.set_ylabel("% acceptation")
     ax.legend()
     plt.setp(ax.get_xticklabels(), rotation=0)
-    _save(fig, "03_taux_par_education.png")
+    return _save(fig, "03_taux_par_education.png")
 
 
 def plot_income_vs_ccavg(df: pd.DataFrame) -> None:
@@ -69,7 +71,7 @@ def plot_income_vs_ccavg(df: pd.DataFrame) -> None:
     ax.set_xlabel("Revenu annuel (k$)")
     ax.set_ylabel("CCAvg mensuel (k$)")
     ax.legend()
-    _save(fig, "04_income_vs_ccavg.png")
+    return _save(fig, "04_income_vs_ccavg.png")
 
 
 def run() -> None:
