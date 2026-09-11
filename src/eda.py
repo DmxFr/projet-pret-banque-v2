@@ -34,7 +34,9 @@ def plot_distribution_cible(df: pd.DataFrame) -> None:
 
 
 def plot_taux_par_revenu(df: pd.DataFrame) -> None:
+    ordre = ["<50k", "50-100k", "100-150k", "150k+"]   # <-- ordre logique
     taux = df.groupby("Income_Group", observed=True)[TARGET].mean() * 100
+    taux = taux.reindex([o for o in ordre if o in taux.index])
     fig, ax = plt.subplots(figsize=(6, 4))
     taux.plot(kind="bar", ax=ax, color=BLEU)
     ax.axhline(df[TARGET].mean() * 100, color="red", ls="--", lw=1,
