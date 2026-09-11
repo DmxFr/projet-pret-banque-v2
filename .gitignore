@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.joblib
+*.pyc
+!models/modele_pret.joblib
+#*#
