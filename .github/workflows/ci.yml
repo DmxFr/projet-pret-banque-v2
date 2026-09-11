@@ -28,3 +28,9 @@ jobs:
 
       - name: Train model (reproductibility check)
         run: python -m src.train
+    docker:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Build image
+          run: docker build -t pret-banque .
