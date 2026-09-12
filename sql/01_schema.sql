@@ -48,7 +48,10 @@ CREATE TABLE clients (
     cd_account         TINYINT  DEFAULT 0,
     online             TINYINT  DEFAULT 0,
     credit_card        TINYINT  DEFAULT 0,
-    -- Colonnes générées : tranches calculées une seule fois
+    -- Colonnes générées (STORED) : tranches calculées une seule fois à l'insertion
+    -- plutôt que recalculées dans chaque requête BI. Bornes alignées sur
+    -- src/data_prep.py::add_segments (right=False côté pandas) pour que Python
+    -- et SQL racontent la même histoire.
     age_group VARCHAR(8)  AS (CASE WHEN age < 30 THEN '<30'
                                    WHEN age < 50 THEN '30-50'
                                    WHEN age < 70 THEN '50-70'

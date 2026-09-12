@@ -22,11 +22,15 @@ st.set_page_config(page_title="Scoring Prêt Personnel", page_icon="🏦", layou
 
 @st.cache_resource
 def charger_modele():
+    """Charge le .joblib une seule fois par session : Streamlit ré-exécute tout
+    le script à chaque interaction utilisateur, recharger le modèle à chaque fois
+    serait coûteux et inutile."""
     return joblib.load(MODEL_PATH)
 
 
 @st.cache_data
 def charger_donnees():
+    """Charge le CSV nettoyé une seule fois par session, pour la même raison."""
     return pd.read_csv(CLEAN_CSV)
 
 
@@ -62,6 +66,9 @@ with onglet_score:
         proba = charger_modele().predict_proba(X)[0, 1]
 
         st.subheader(f"Probabilité d'acceptation : {proba*100:.1f} %")
+        # Seuils de lecture métier : 0.5 = seuil de décision standard (aligné sur
+        # l'évaluation du modèle dans train.py) ; 0.2 = zone grise "à surveiller"
+        # plutôt qu'un simple oui/non, pour ne pas écarter trop vite un profil mitigé.
         if proba >= 0.5:
             st.success("✅ Client à cibler en priorité")
         elif proba >= 0.2:

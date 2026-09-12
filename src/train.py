@@ -19,10 +19,21 @@ from sklearn.preprocessing import StandardScaler
 from src.config import (CLEAN_CSV, MODEL_PATH, PREDICTIONS_CSV, RAPPORTS_DIR,
                         RANDOM_STATE, TARGET)
 
-COLS_A_EXCLURE = ["ID", "ZIP_Code", "Age_Group", "Income_Group"]  # ZIP = 500 modalités
+COLS_A_EXCLURE = ["ID", "ZIP_Code", "Age_Group", "Income_Group"]
+# ID : identifiant, aucune valeur prédictive.
+# ZIP_Code : ~500 modalités -> one-hot naïf = surapprentissage / fuite potentielle.
+# Age_Group / Income_Group : dérivées d'Age / Income déjà présentes -> redondantes.
 
 
 def build_models() -> dict:
+    """Deux modèles à comparer : régression logistique (baseline interprétable,
+    coefficients lisibles) et Random Forest (référence de performance).
+
+    class_weight="balanced" sur les deux : la classe positive ne représente que
+    ~9,6% du dataset. Sans repondération, un modèle qui prédit toujours "refus"
+    atteindrait déjà ~90% d'accuracy sans être utile — "balanced" pénalise plus
+    fort les erreurs sur la classe minoritaire pour éviter ce piège.
+    """
     return {
         "Regression logistique": Pipeline([
             ("scaler", StandardScaler()),
@@ -39,6 +50,9 @@ def run(csv_path=None) -> None:
     df = pd.read_csv(csv_path or CLEAN_CSV)
     exclude = [c for c in COLS_A_EXCLURE + [TARGET] if c in df.columns]
     X, y = df.drop(columns=exclude), df[TARGET]
+    # stratify=y : conserve ~9,6% de classe positive dans train ET test malgré le
+    # déséquilibre — un split purement aléatoire pourrait sous-représenter les
+    # rares acceptations côté test et fausser l'évaluation (AUC, recall).
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.25, stratify=y, random_state=RANDOM_STATE)
 
@@ -65,6 +79,9 @@ def run(csv_path=None) -> None:
     plt.savefig(RAPPORTS_DIR / "matrice_confusion.png", dpi=150)
     plt.close()
 
+    # Importance par permutation plutôt que feature_importances_ natif de la RF :
+    # mesure la vraie contribution prédictive et n'est pas biaisée envers les
+    # variables à forte cardinalité.
     r = permutation_importance(meilleur["modele"], X_test, y_test,
                                n_repeats=10, random_state=RANDOM_STATE, n_jobs=-1)
     ordre = r.importances_mean.argsort()

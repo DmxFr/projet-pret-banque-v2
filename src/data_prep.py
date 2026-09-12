@@ -15,7 +15,9 @@ except ImportError:
 
 
 def load_data(source_path: Optional[str] = None) -> pd.DataFrame:
-    """Charge depuis un chemin local, le CSV brut du repo, ou l'URL."""
+    """Charge depuis un chemin explicite, sinon le CSV brut versionné dans le repo,
+    sinon l'URL Hugging Face en dernier recours — pour que le pipeline tourne même
+    si data/raw/ n'est pas disponible (ex. exécution hors du repo complet)."""
     if source_path:
         df = pd.read_csv(source_path)
     elif RAW_CSV.exists():
@@ -31,6 +33,8 @@ def load_data(source_path: Optional[str] = None) -> pd.DataFrame:
 
 
 def quick_overview(df: pd.DataFrame) -> None:
+    """Diagnostic rapide + garde-fou : échoue tôt si la colonne cible est absente,
+    plutôt que de laisser une erreur confuse plus loin dans le pipeline."""
     print(f"[INFO] {df.shape[0]} lignes x {df.shape[1]} colonnes")
     print(f"[INFO] Manquantes : {df.isna().sum().sum()} | Doublons : {df.duplicated().sum()}")
     if TARGET not in df.columns:
@@ -48,6 +52,8 @@ def fix_experience(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def drop_duplicates(df: pd.DataFrame) -> pd.DataFrame:
+    """Supprime les doublons exacts ; le compte supprimé est loggé pour repérer
+    un éventuel problème d'extraction en amont plutôt que de nettoyer en silence."""
     before = len(df)
     df = df.drop_duplicates().copy()
     if len(df) != before:
